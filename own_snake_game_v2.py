@@ -7,6 +7,7 @@ import time
 from PIL import Image
 import cv2
 import math
+
 # import keras
 # from keras import models
 # from keras.layers import *
@@ -21,13 +22,13 @@ SNAKE_N = 1
 FOOD_N = 2
 FIELD_N = 3
 
-#model_parametres
+# model_parametres
 OBSERVATION_SPACE_VALUE = (SIZE, SIZE, 3)
-
 
 d = {1: (0, 0, 255),
      2: (0, 255, 0),
-     3: (255,255,255)}
+     3: (255, 255, 255)}
+
 
 # class DQNAgent:
 #
@@ -77,11 +78,10 @@ class Cube:
         return self.y
 
 
-
 done = False
 
-class Snake:
 
+class Snake:
     snake_body = []
 
     def __init__(self):
@@ -94,86 +94,51 @@ class Snake:
             if self.snake_body[0] == segment:
                 return True
 
-    def action(self, choice):
+    def action(self, choice, apple):
         if choice == 1:
-            self.move(x=1)
+            self.move(x=1, y=0, apple=apple)
         if choice == 2:
-            self.move(x=-1)
+            self.move(x=-1, y=0, apple=apple)
         if choice == 3:
-            self.move(y=1)
+            self.move(y=1, x=0, apple=apple)
         if choice == 4:
-            self.move(y=-1)
+            self.move(y=-1, x=0, apple=apple)
 
-    def move(self, x=None, y=None):
-        snake_body_length = len(self.snake_body)
+    def move(self, x=None, y=None, apple=None):
 
-        if y:
-            if snake_body_length > 1:
-                for i in range(len(self.snake_body) - 1, 0, -1):
-                    self.snake_body[i] = self.snake_body[i - 1]
+        if self.snake_body[0].get_x() + x == apple.get_x() and self.snake_body[0].get_y() + y == apple.get_y():
+            self.snake_body = [Cube(apple.get_x(), apple.get_y())] + self.snake_body
+            print("hey")
 
-            self.snake_body[0] = Cube(self.snake_body[0].x, self.snake_body[0].y + y)
 
-            if self.snake_body[0].get_y() > SIZE - 1:
-                print("work")
-                self.snake_body[0] = Cube(self.snake_body[0].get_x(), 0)
-            elif self.snake_body[0].get_y() < 0:
-                print("work2")
-                self.snake_body[0] = Cube(self.snake_body[0].get_x(), SIZE - 1)
 
-            for i in range(len(self.snake_body) - 1, 1, -1):
-                if self.snake_body[0].get_x() == self.snake_body[i].get_x() and self.snake_body[0].get_y() == self.snake_body[i].get_y():
-                    print("y")
+        if len(self.snake_body) > 1:
+            for i in range(len(self.snake_body) - 1, 0, -1):
+                self.snake_body[i] = self.snake_body[i - 1]
 
-                    sys.exit()
-        if x:
-            if snake_body_length > 1:
-                for i in range(len(self.snake_body) - 1, 0, -1):
-                    self.snake_body[i] = self.snake_body[i - 1]
-            self.snake_body[0] = Cube(self.snake_body[0].x + x, self.snake_body[0].y)
+        self.snake_body[0] = Cube(self.snake_body[0].x+x, self.snake_body[0].y+y)
 
-            if self.snake_body[0].get_x() > SIZE - 1:
-                self.snake_body[0] = Cube(0, self.snake_body[0].get_y())
-            elif self.snake_body[0].get_x() < 0:
-                self.snake_body[0] = Cube(SIZE - 1, self.snake_body[0].get_y())
+        if self.snake_body[0].get_y() > SIZE - 1:
+            self.snake_body[0] = Cube(self.snake_body[0].get_x(), 0)
+        elif self.snake_body[0].get_y() < 0:
+            self.snake_body[0] = Cube(self.snake_body[0].get_x(), SIZE - 1)
+        elif self.snake_body[0].get_x() > SIZE - 1:
+            self.snake_body[0] = Cube(0, self.snake_body[0].get_y())
+        elif self.snake_body[0].get_x() < 0:
+            self.snake_body[0] = Cube(SIZE - 1, self.snake_body[0].get_y())
 
-            for i in range(len(self.snake_body) - 1, 1, -1):
-                if self.snake_body[0].get_x() == self.snake_body[i].get_x() and self.snake_body[0].get_y() == self.snake_body[i].get_y():
-                    print("head x", self.snake_body[0].get_x())
-                    print("head y", self.snake_body[0].get_y())
-                    print("i x", self.snake_body[i].get_x())
-                    print("i y", self.snake_body[i].get_y())
-                    sys.exit()
+        if self.check_if_collided():
+            sys.exit()
 
-    def add_snake_body(self, last_direction):
-        snake_body_length = len(self.snake_body)
+    def check_if_collided(self):
+        for i in range(len(self.snake_body) - 1, 1, -1):
+            if self.snake_body[0].get_x() == self.snake_body[i].get_x() and self.snake_body[0].get_y() == self.snake_body[i].get_y():
+                sys.exit()
 
-        if snake_body_length > 1:
-            if self.snake_body[-1].get_x() == self.snake_body[-2].get_x():
-                if (self.snake_body[-1]).get_y() > self.snake_body[-2].get_y():
-                    self.snake_body.append(Cube(self.snake_body[-1].get_x(), self.snake_body[-1].get_y() + 1))
-                else:
-                    self.snake_body.append(Cube(self.snake_body[-1].get_x(), self.snake_body[-1].get_y() - 1))
-
-            if self.snake_body[-1].get_y() == self.snake_body[-2].get_y():
-                if (self.snake_body[-1]).get_x() > self.snake_body[-2].get_x():
-                    self.snake_body.append(Cube(self.snake_body[-1].get_x() + 1, self.snake_body[-1].get_y()))
-                else:
-                    self.snake_body.append(Cube(self.snake_body[-1].get_x() - 1, self.snake_body[-1].get_y()))
-        else:
-            if last_direction == 4:
-                self.snake_body.append(Cube(self.snake_body[0].get_x(), self.snake_body[0].get_y() + 1))
-            elif last_direction == 3:
-                self.snake_body.append(Cube(self.snake_body[0].get_x(), self.snake_body[0].get_y() - 1))
-            elif last_direction == 1:
-                self.snake_body.append(Cube(self.snake_body[0].get_x() + 1, self.snake_body[0].get_y()))
-            elif last_direction == 2:
-                self.snake_body.append(Cube(self.snake_body[0].get_x() - 1, self.snake_body[0].get_y()))
 
 
 def get_image(snake, reward):
     env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8)  # starts an rbg of our size
-
 
     env[reward.get_y()][reward.get_x()] = d[FOOD_N]  # sets the food location tile to green color
     for segment in snake.snake_body:
@@ -187,6 +152,8 @@ def check_apple_position(snake, apple):
     if snake.snake_body[0].get_x() == apple.get_x() & snake.snake_body[0].get_y() == apple.get_y():
         return True
     return False
+
+
 
 
 def main():
@@ -210,12 +177,13 @@ def main():
         elif keyboard.is_pressed('left'):
             chosen_direction = 2
 
-        snake.action(chosen_direction)
-
+        snake.action(chosen_direction, apple=apple)
+        print("snake x: ", snake.snake_body[0].get_x())
+        print('apple x: ', apple.get_x())
+        print("snake y: ", snake.snake_body[0].get_y())
+        print("apple y: ", apple.get_y())
         if snake.snake_body[0].get_x() == apple.get_x() and snake.snake_body[0].get_y() == apple.get_y():
-
-            snake.add_snake_body(last_direction=chosen_direction)
-
+            print("hello")
             apple = Cube(np.random.randint(0, SIZE), np.random.randint(0, SIZE))
             while check_apple_position(snake, apple):
                 apple = Cube(np.random.randint(0, SIZE), np.random.randint(0, SIZE))
