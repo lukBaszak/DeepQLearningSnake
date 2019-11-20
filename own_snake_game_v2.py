@@ -163,7 +163,7 @@ def main():
 
     while check_apple_position(snake, apple):
         apple = Cube(np.random.randint(0, SIZE), np.random.randint(0, SIZE))
-
+    print("work")
     while not done:
         if keyboard.is_pressed('down'):
             print("down")
